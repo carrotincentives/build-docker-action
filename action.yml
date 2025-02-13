@@ -1,0 +1,50 @@
+name: 'Build and Push Docker Image'
+description: 'A reusable GitHub Action to build Docker image from a Dockerfile, and push it to a registry'
+
+inputs:
+
+  # Docker Registry Credentials
+  registry_url:
+      description: 'URL of the Docker registry'
+      required: true
+    registry_username:
+      description: 'Username for the Docker registry'
+      required: true
+    registry_password:
+      description: 'Password for the Docker registry'
+      required: true
+
+    # Docker Build & Tagging
+    docker_context:
+      description: 'Path to the Docker build context'
+      required: true
+      default: '.'
+    dockerfile_path:
+      description: 'Path to the Dockerfile (default: "./Dockerfile")'
+      required: false
+      default: './Dockerfile'
+    image_name:
+      description: 'Name of the Docker image'
+      required: true
+    build_version:
+      description: 'Version to tag the Docker image with'
+      required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Login to Docker Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ inputs.registry_url }}
+        username: ${{ inputs.registry_username }}
+        password: ${{ inputs.registry_password }}
+        logout: true
+
+    - name: Build and Push Docker Image
+      uses: docker/build-push-action@v6
+      with:
+        context: ${{ inputs.docker_context }}
+        file: ${{ inputs.dockerfile_path }}
+        push: true
+        tags: ${{ inputs.registry_url }}/${{ inputs.image_name }}:${{ inputs.build_version }}
